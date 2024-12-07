@@ -1,9 +1,12 @@
 use std::{io, process};
 use std::io::Write;
 use std::ops::RangeInclusive;
+use rand::Rng;
 
 pub struct Guesser {
     guess_type: GuessType,
+    auto_mode: bool,
+    auto_mode_number: i32,
     left_value: i32,
     right_value: i32,
     prev_guess: i32,
@@ -18,15 +21,19 @@ pub enum GuessType {
 }
 
 impl Guesser {
-    pub fn new(range: RangeInclusive<i32>) -> Guesser {
+    pub fn new(range: RangeInclusive<i32>, auto_mode: bool) -> Guesser {
         let left_value = *range.start();
         let right_value = *range.end();
-
+        
+        let rand_num = rand::rng().random_range(range);
+        
         Self {
             left_value,
             right_value,
+            auto_mode,
             num_guesses: 0,
             prev_guess: 0,
+            auto_mode_number: rand_num,
             guess_type: GuessType::First
         }
     }
@@ -42,15 +49,23 @@ impl Guesser {
         
         match self.guess_type {
             GuessType::Low => {
-                self.right_value = self.prev_guess;
+                self.right_value = self.prev_guess - 1;
+                
+                if self.auto_mode {
+                    println!("Setting {} as right bound, new range is [{}, {}]", self.prev_guess, self.left_value, self.right_value);
+                }
             },
 
             GuessType::High => {
-                self.left_value = self.prev_guess;
+                self.left_value = self.prev_guess + 1;
+                
+                if self.auto_mode {
+                    println!("Setting {} as left bound, new range is [{}, {}]", self.prev_guess, self.left_value, self.right_value);
+                }
             },
 
             GuessType::Correct => {
-                println!("I guessed your number! Took {} tries", self.num_guesses);
+                println!("I guessed the number {}! Took {} tries", self.prev_guess, self.num_guesses);
                 process::exit(0);
             },
             
@@ -65,6 +80,17 @@ impl Guesser {
     }
 
     pub fn handle_response(&mut self) {
+        if self.auto_mode {
+            if self.prev_guess < self.auto_mode_number {
+                self.set_guesstype(GuessType::High);
+            } else if self.prev_guess > self.auto_mode_number {
+                self.set_guesstype(GuessType::Low);
+            } else {
+                self.set_guesstype(GuessType::Correct);
+            }
+            return;
+        }
+        
         loop {
             let mut user_response = String::new();
 
@@ -73,7 +99,7 @@ impl Guesser {
             io::stdin().read_line(&mut user_response).expect("Failed to read line");
 
             let first_char = user_response.chars().next().unwrap_or('?').to_ascii_lowercase();
-
+            
             match first_char {
                 'h' => {
                     self.set_guesstype(GuessType::High);
