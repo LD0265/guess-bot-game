@@ -9,13 +9,13 @@ fn main() {
     
     let mut input = String::new();
     
-    print!("Define an inclusive range for guesser (ex. 0-100): ");
+    print!("Define an inclusive range for guesser (ex. 0, 100): ");
     io::stdout().flush().unwrap();
     io::stdin().read_line(&mut input).expect("Failed to read line");
     
-    let range = input.split('-').collect::<Vec<&str>>();
+    let range = input.split(',').collect::<Vec<&str>>();
     
-    if range.len() != 2 || !input.contains("-"){
+    if range.len() != 2 || !input.contains(",") {
         println!("Invalid input format");
         process::exit(1);
     }
