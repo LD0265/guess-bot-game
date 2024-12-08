@@ -1,7 +1,8 @@
-use std::{io, process};
+use std::io;
 use std::io::Write;
 use std::ops::RangeInclusive;
 use rand::Rng;
+use crate::wait_for_exit;
 
 pub struct Guesser {
     guess_type: GuessType,
@@ -52,7 +53,8 @@ impl Guesser {
                 self.right_value = self.prev_guess - 1;
                 
                 if self.auto_mode {
-                    println!("Setting {} as right bound, new range is [{}, {}]", self.prev_guess, self.left_value, self.right_value);
+                    println!("The real number is less than {}", self.prev_guess);
+                    println!("Setting {} as right bound, new range is [{}, {}]", self.prev_guess - 1, self.left_value, self.right_value);
                 }
             },
 
@@ -60,13 +62,15 @@ impl Guesser {
                 self.left_value = self.prev_guess + 1;
                 
                 if self.auto_mode {
-                    println!("Setting {} as left bound, new range is [{}, {}]", self.prev_guess, self.left_value, self.right_value);
+                    println!("The real number is greater than {}", self.prev_guess);
+                    println!("Setting {} as left bound, new range is [{}, {}]", self.prev_guess + 1, self.left_value, self.right_value);
                 }
             },
 
             GuessType::Correct => {
+                println!();
                 println!("I guessed the number {}! Took {} tries", self.prev_guess, self.num_guesses);
-                process::exit(0);
+                wait_for_exit();
             },
             
             _ => {}
@@ -94,7 +98,7 @@ impl Guesser {
         loop {
             let mut user_response = String::new();
 
-            print!("Am I higher, lower, or correct?: ");
+            print!("Should I guess higher, lower, or am I correct: ");
             io::stdout().flush().unwrap();
             io::stdin().read_line(&mut user_response).expect("Failed to read line");
 
